@@ -17,8 +17,8 @@ for dir in "${LAMBDA_DIRS[@]}"; do
         exit 1
     fi
 
-    # Zip the binary into a deployment package
-    zip "$dir.zip" bootstrap
+    # Zip the binary into a deployment package named "main.zip" inside the same directory
+    zip "main.zip" bootstrap
 
     # Remove the binary to clean up
     rm bootstrap
@@ -27,4 +27,5 @@ for dir in "${LAMBDA_DIRS[@]}"; do
     cd ../..
 done
 
-echo "All Lambda functions built and zipped successfully."
+echo "All Lambda functions built and zipped successfully as 'main.zip' in each folder."
+

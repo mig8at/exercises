@@ -6,7 +6,10 @@ provider "aws" {
 # Tabla DynamoDB
 module "contacts_table" {
   source           = "../../../modules/dynamodb"
-  table_name       = "contacts-dev"
+  table_name       = "contacts"
+  country          = var.country
+  product          = var.product
+  environment      = var.environment
   billing_mode     = "PAY_PER_REQUEST"
   hash_key         = "id"
   stream_enabled   = true
@@ -15,14 +18,20 @@ module "contacts_table" {
 
 # API Gateway
 module "main_api" {
-  source   = "../../../modules/api-gateway"
-  api_name = "contacts-api-dev"
+  source      = "../../../modules/api-gateway"
+  api_name    = "contacts"
+  country     = var.country
+  product     = var.product
+  environment = var.environment
 }
 
 # SNS
 module "sns_topic" {
-  source     = "../../../modules/sns"
-  topic_name = "contacts-topic-dev"
+  source      = "../../../modules/sns"
+  topic_name  = "contacts"
+  country     = var.country
+  product     = var.product
+  environment = var.environment
 }
 
 # Cognito

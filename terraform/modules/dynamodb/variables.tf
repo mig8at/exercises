@@ -1,3 +1,13 @@
+variable "country" {
+  type = string
+}
+variable "product" {
+  type = string
+}
+variable "environment" {
+  type = string
+}
+
 variable "table_name" {
   description = "Nombre de la tabla DynamoDB"
   type        = string

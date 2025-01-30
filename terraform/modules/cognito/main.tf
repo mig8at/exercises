@@ -1,4 +1,6 @@
-# Configuración de Cognito (comentado por ahora)
+
+
+
 resource "aws_cognito_user_pool" "pool" {
   name = var.user_pool_name
 }

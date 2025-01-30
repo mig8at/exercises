@@ -1,39 +1,195 @@
-module "dynamodb_table" {
-  source       = "../../../modules/dynamodb"
-  table_name   = "dev-ar-table"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "id"
-  tags = {
-    Environment = "dev"
-    Country     = "ar"
-  }
+# Proveedor AWS
+provider "aws" {
+  region = "us-east-1"
 }
 
-module "lambda_create_contact" {
-  source                = "../../../modules/lambda"
-  filename              = "../../../../lambdas/create-contact/main.zip"
-  function_name         = "create-contact-dev-ar"
-  runtime               = "provided.al2"
-  architectures         = ["arm64"]
-  handler               = "bootstrap"
+# Tabla DynamoDB
+module "contacts_table" {
+  source           = "../../../modules/dynamodb"
+  table_name       = "contacts-dev"
+  billing_mode     = "PAY_PER_REQUEST"
+  hash_key         = "id"
+  stream_enabled   = true
+  stream_view_type = "NEW_IMAGE"
+}
+
+# API Gateway
+module "main_api" {
+  source   = "../../../modules/api-gateway"
+  api_name = "contacts-api-dev"
+}
+
+# SNS
+module "sns_topic" {
+  source     = "../../../modules/sns"
+  topic_name = "contacts-topic-dev"
+}
+
+# Cognito
+# module "cognito" {
+#   source          = "../../../modules/cognito"
+#   user_pool_name  = "contacts-pool-dev"
+#   client_name     = "contacts-client-dev"
+#   api_gateway_id  = module.main_api.api_id
+#   region          = "us-east-1"
+# }
+
+# Lambda Functions
+module "create_contact_lambda" {
+  source                 = "../../../modules/lambda"
+  function_name          = "create-contact"
+  environment            = "dev"
+  filename               = "../../../../lambdas/bin/create-contact.zip"
+  runtime                = "provided.al2"
+  handler                = "bootstrap"
+  memory_size            = 256
+  enable_dynamodb_access = true
+  dynamodb_actions       = ["dynamodb:PutItem"]
+  dynamodb_table_arn     = module.contacts_table.table_arn
   environment_variables = {
-    TABLE_NAME = module.dynamodb_table.table_name
+    TABLE_NAME = module.contacts_table.table_name
   }
-  dynamodb_table_arn    = module.dynamodb_table.table_arn
 }
 
-module "api_gateway" {
-  source                 = "../../../modules/api-gateway"
-  api_name               = "contacts-api-dev-ar"
-  lambda_arn             = module.lambda_create_contact.lambda_function_arn
-  lambda_function_name   = module.lambda_create_contact.lambda_function_name
-  cognito_authorizer_id  = module.cognito.authorizer_id
+# In environments/dev/ar/main.tf, update the dynamodb_trigger_lambda module:
+module "dynamodb_trigger_lambda" {
+  source                 = "../../../modules/lambda"
+  function_name          = "dynamodb-trigger"
+  environment            = "dev"
+  filename               = "../../../../lambdas/bin/dynamodb-trigger.zip"
+  runtime                = "provided.al2"
+  handler                = "bootstrap"
+  memory_size            = 256
+  enable_dynamodb_access = true
+  dynamodb_actions       = [
+    "dynamodb:GetRecords",
+    "dynamodb:GetShardIterator",
+    "dynamodb:DescribeStream",
+    "dynamodb:ListStreams"
+  ]
+  # Correct the ARN to use the stream's ARN
+  dynamodb_table_arn     = module.contacts_table.table_stream_arn
+  enable_sns_access      = true
+  sns_topic_arn          = module.sns_topic.topic_arn
+  environment_variables = {
+    TABLE_NAME    = module.contacts_table.table_name
+    SNS_TOPIC_ARN = module.sns_topic.topic_arn
+  }
 }
 
-module "cognito" {
-  source          = "../../../modules/cognito"
-  user_pool_name  = "dev-ar-users"
-  client_name     = "dev-ar-client"
-  api_gateway_id  = module.api_gateway.api_id
-  region          = "us-east-1"
+module "get_contact_lambda" {
+  source                 = "../../../modules/lambda"
+  function_name          = "get-contact"
+  environment            = "dev"
+  filename               = "../../../../lambdas/bin/get-contact.zip"
+  runtime                = "provided.al2"
+  handler                = "bootstrap"
+  memory_size            = 256
+  enable_dynamodb_access = true
+  dynamodb_actions       = ["dynamodb:GetItem"]
+  dynamodb_table_arn     = module.contacts_table.table_arn
+  environment_variables = {
+    TABLE_NAME = module.contacts_table.table_name
+  }
+}
+
+module "sns_trigger_lambda" {
+  source                 = "../../../modules/lambda"
+  function_name          = "sns-trigger"
+  environment            = "dev"
+  filename               = "../../../../lambdas/bin/sns-trigger.zip"
+  runtime                = "provided.al2"
+  handler                = "bootstrap"
+  memory_size            = 256
+  enable_dynamodb_access = true
+  dynamodb_actions       = ["dynamodb:UpdateItem"]
+  dynamodb_table_arn     = module.contacts_table.table_arn
+  environment_variables = {
+    TABLE_NAME = module.contacts_table.table_name
+  }
+}
+
+# API Gateway Integrations and Routes for /contacts
+resource "aws_apigatewayv2_integration" "create_contact_integration" {
+  api_id           = module.main_api.api_id
+  integration_type = "AWS_PROXY"
+  integration_uri  = module.create_contact_lambda.function_arn
+}
+
+resource "aws_apigatewayv2_route" "create_contact" {
+  api_id    = module.main_api.api_id
+  route_key = "POST /contacts"
+  target    = "integrations/${aws_apigatewayv2_integration.create_contact_integration.id}"
+  # authorizer_id = module.cognito.authorizer_id
+}
+
+resource "aws_lambda_permission" "api_gw_create_contact" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.create_contact_lambda.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${module.main_api.api_execution_arn}/*/*"
+}
+
+
+resource "aws_apigatewayv2_integration" "get_contact_integration" {
+  api_id           = module.main_api.api_id
+  integration_type = "AWS_PROXY"
+  integration_uri  = module.get_contact_lambda.function_arn
+}
+
+
+resource "aws_apigatewayv2_route" "get_contact" {
+  api_id    = module.main_api.api_id
+  route_key = "GET /contacts/{id}"
+  target    = "integrations/${aws_apigatewayv2_integration.get_contact_integration.id}"
+}
+
+resource "aws_lambda_permission" "api_gw_get_contact" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.get_contact_lambda.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${module.main_api.api_execution_arn}/*/*"
+}
+
+
+
+# DynamoDB Stream Trigger
+resource "aws_lambda_event_source_mapping" "dynamodb_stream" {
+  event_source_arn  = module.contacts_table.table_stream_arn
+  function_name     = module.dynamodb_trigger_lambda.function_arn
+  starting_position = "LATEST"
+}
+
+#SNS Trigger
+resource "aws_sns_topic_subscription" "sns_trigger_sub" {
+  topic_arn = module.sns_topic.topic_arn
+  protocol  = "lambda"
+  endpoint  = module.sns_trigger_lambda.function_arn
+}
+
+# Permiso para SNS invocar Lambda
+resource "aws_lambda_permission" "sns_trigger" {
+  statement_id  = "AllowExecutionFromSNS"
+  action        = "lambda:InvokeFunction"
+  function_name = module.sns_trigger_lambda.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = module.sns_topic.topic_arn
+}
+
+
+resource "aws_apigatewayv2_deployment" "api_deployment" {
+  api_id = module.main_api.api_id
+  depends_on = [
+    aws_apigatewayv2_route.create_contact,
+    aws_apigatewayv2_route.get_contact
+  ]
+}
+
+# Stage para el entorno (requerido para la URL)
+resource "aws_apigatewayv2_stage" "default_stage" {
+  api_id      = module.main_api.api_id
+  name        = "dev"
+  auto_deploy = true
 }

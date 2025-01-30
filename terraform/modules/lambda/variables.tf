@@ -1,34 +1,43 @@
-variable "filename" {
-  description = "The path to the Lambda function deployment package"
-  type        = string
-}
-
+# Define input variables
 variable "function_name" {
-  description = "The name of the Lambda function"
-  type        = string
+  type = string
 }
-
+variable "environment" {
+  type = string
+}
+variable "filename" {
+  type = string
+}
 variable "runtime" {
-  description = "The runtime environment for the Lambda function"
-  type        = string
+    type = string
 }
-
-variable "architectures" {
-  description = "The architecture of the Lambda function"
-  type        = list(string)
-}
-
 variable "handler" {
-  description = "The function entrypoint in your code"
-  type        = string
+    type = string
 }
-
-variable "environment_variables" {
-  description = "A map of environment variables to pass to the Lambda function"
-  type        = map(string)
+variable "memory_size" {
+  type = number
 }
-
+variable "enable_dynamodb_access" {
+  type    = bool
+  default = false
+}
+variable "dynamodb_actions" {
+  type    = list(string)
+  default = []
+}
 variable "dynamodb_table_arn" {
-  description = "The ARN of the DynamoDB table"
-  type        = string
+  type    = string
+  default = null
+}
+variable "environment_variables" {
+    type = map(string)
+    default = {}
+}
+variable "enable_sns_access" {
+  type    = bool
+  default = false
+}
+variable "sns_topic_arn" {
+  type    = string
+  default = null
 }

@@ -87,5 +87,5 @@ override.tf.json
 # Excluir archivos .DS_Store de macOS
 .DS_Store
 
-estructura.txt
+tree.txt
 tree.js

@@ -3,8 +3,8 @@ resource "aws_lambda_function" "this" {
   filename      = var.filename
   function_name = "${var.environment}-${var.function_name}"
   role          = aws_iam_role.lambda_role.arn
-  handler       = var.handler
-  runtime       = var.runtime
+  runtime       = "provided.al2"
+  handler       = "bootstrap"
   memory_size   = var.memory_size
   architectures = ["arm64"]
   environment {
@@ -18,9 +18,9 @@ resource "aws_iam_role" "lambda_role" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [{
-      Effect = "Allow",
+      Effect    = "Allow",
       Principal = { Service = "lambda.amazonaws.com" },
-      Action = "sts:AssumeRole"
+      Action    = "sts:AssumeRole"
     }]
   })
 }
@@ -51,8 +51,8 @@ resource "aws_iam_role_policy" "dynamodb_policy" {
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [{
-      Effect   = "Allow",
-      Action   = var.dynamodb_actions,
+      Effect = "Allow",
+      Action = var.dynamodb_actions,
       Resource = [
         var.dynamodb_table_arn,
         "${var.dynamodb_table_arn}/index/*"
@@ -82,5 +82,5 @@ output "function_arn" {
 }
 
 output "function_name" {
-    value = aws_lambda_function.this.function_name
+  value = aws_lambda_function.this.function_name
 }

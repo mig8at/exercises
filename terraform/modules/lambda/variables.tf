@@ -8,12 +8,8 @@ variable "environment" {
 variable "filename" {
   type = string
 }
-variable "runtime" {
-    type = string
-}
-variable "handler" {
-    type = string
-}
+
+
 variable "memory_size" {
   type = number
 }
@@ -30,8 +26,8 @@ variable "dynamodb_table_arn" {
   default = null
 }
 variable "environment_variables" {
-    type = map(string)
-    default = {}
+  type    = map(string)
+  default = {}
 }
 variable "enable_sns_access" {
   type    = bool

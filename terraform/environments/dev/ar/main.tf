@@ -40,8 +40,6 @@ module "create_contact_lambda" {
   function_name          = "create-contact"
   environment            = "dev"
   filename               = "../../../../lambdas/bin/create-contact.zip"
-  runtime                = "provided.al2"
-  handler                = "bootstrap"
   memory_size            = 256
   enable_dynamodb_access = true
   dynamodb_actions       = ["dynamodb:PutItem"]
@@ -57,20 +55,18 @@ module "dynamodb_trigger_lambda" {
   function_name          = "dynamodb-trigger"
   environment            = "dev"
   filename               = "../../../../lambdas/bin/dynamodb-trigger.zip"
-  runtime                = "provided.al2"
-  handler                = "bootstrap"
   memory_size            = 256
   enable_dynamodb_access = true
-  dynamodb_actions       = [
+  dynamodb_actions = [
     "dynamodb:GetRecords",
     "dynamodb:GetShardIterator",
     "dynamodb:DescribeStream",
     "dynamodb:ListStreams"
   ]
   # Correct the ARN to use the stream's ARN
-  dynamodb_table_arn     = module.contacts_table.table_stream_arn
-  enable_sns_access      = true
-  sns_topic_arn          = module.sns_topic.topic_arn
+  dynamodb_table_arn = module.contacts_table.table_stream_arn
+  enable_sns_access  = true
+  sns_topic_arn      = module.sns_topic.topic_arn
   environment_variables = {
     TABLE_NAME    = module.contacts_table.table_name
     SNS_TOPIC_ARN = module.sns_topic.topic_arn
@@ -82,8 +78,6 @@ module "get_contact_lambda" {
   function_name          = "get-contact"
   environment            = "dev"
   filename               = "../../../../lambdas/bin/get-contact.zip"
-  runtime                = "provided.al2"
-  handler                = "bootstrap"
   memory_size            = 256
   enable_dynamodb_access = true
   dynamodb_actions       = ["dynamodb:GetItem"]
@@ -98,8 +92,6 @@ module "sns_trigger_lambda" {
   function_name          = "sns-trigger"
   environment            = "dev"
   filename               = "../../../../lambdas/bin/sns-trigger.zip"
-  runtime                = "provided.al2"
-  handler                = "bootstrap"
   memory_size            = 256
   enable_dynamodb_access = true
   dynamodb_actions       = ["dynamodb:UpdateItem"]

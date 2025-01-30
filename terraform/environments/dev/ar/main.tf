@@ -38,7 +38,9 @@ module "sns_topic" {
 module "create_contact_lambda" {
   source                 = "../../../modules/lambda"
   function_name          = "create-contact"
-  environment            = "dev"
+  country                = var.country
+  product                = var.product
+  environment            = var.environment
   filename               = "../../../../lambdas/bin/create-contact.zip"
   memory_size            = 256
   enable_dynamodb_access = true
@@ -53,7 +55,9 @@ module "create_contact_lambda" {
 module "dynamodb_trigger_lambda" {
   source                 = "../../../modules/lambda"
   function_name          = "dynamodb-trigger"
-  environment            = "dev"
+  country                = var.country
+  product                = var.product
+  environment            = var.environment
   filename               = "../../../../lambdas/bin/dynamodb-trigger.zip"
   memory_size            = 256
   enable_dynamodb_access = true
@@ -76,7 +80,9 @@ module "dynamodb_trigger_lambda" {
 module "get_contact_lambda" {
   source                 = "../../../modules/lambda"
   function_name          = "get-contact"
-  environment            = "dev"
+  country                = var.country
+  product                = var.product
+  environment            = var.environment
   filename               = "../../../../lambdas/bin/get-contact.zip"
   memory_size            = 256
   enable_dynamodb_access = true
@@ -90,7 +96,9 @@ module "get_contact_lambda" {
 module "sns_trigger_lambda" {
   source                 = "../../../modules/lambda"
   function_name          = "sns-trigger"
-  environment            = "dev"
+  country                = var.country
+  product                = var.product
+  environment            = var.environment
   filename               = "../../../../lambdas/bin/sns-trigger.zip"
   memory_size            = 256
   enable_dynamodb_access = true

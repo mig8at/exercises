@@ -2,14 +2,18 @@
 variable "function_name" {
   type = string
 }
+variable "country" {
+  type = string
+}
+variable "product" {
+  type = string
+}
 variable "environment" {
   type = string
 }
 variable "filename" {
   type = string
 }
-
-
 variable "memory_size" {
   type = number
 }

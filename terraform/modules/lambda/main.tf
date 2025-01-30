@@ -1,7 +1,9 @@
+# arg-prepaid-dev
+
 # Función Lambda
 resource "aws_lambda_function" "this" {
   filename      = var.filename
-  function_name = "${var.environment}-${var.function_name}"
+  function_name = "${var.country}-${var.product}-${var.environment}-${var.function_name}"
   role          = aws_iam_role.lambda_role.arn
   runtime       = "provided.al2"
   handler       = "bootstrap"
@@ -14,7 +16,7 @@ resource "aws_lambda_function" "this" {
 
 # Rol IAM para Lambda
 resource "aws_iam_role" "lambda_role" {
-  name = "${var.function_name}-role-${var.environment}"
+  name = "${var.country}-${var.product}-${var.environment}-${var.function_name}-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [{
@@ -27,7 +29,7 @@ resource "aws_iam_role" "lambda_role" {
 
 # Política de logs (CloudWatch)
 resource "aws_iam_role_policy" "logs_policy" {
-  name = "${var.function_name}-logs-${var.environment}"
+  name = "${var.country}-${var.product}-${var.environment}-${var.function_name}-logs"
   role = aws_iam_role.lambda_role.id
   policy = jsonencode({
     Version = "2012-10-17",
@@ -46,7 +48,7 @@ resource "aws_iam_role_policy" "logs_policy" {
 # Política para DynamoDB (condicional)
 resource "aws_iam_role_policy" "dynamodb_policy" {
   count = var.enable_dynamodb_access ? 1 : 0
-  name  = "${var.function_name}-dynamo-${var.environment}"
+  name  = "${var.country}-${var.product}-${var.environment}-${var.function_name}-dynamodb"
   role  = aws_iam_role.lambda_role.id
   policy = jsonencode({
     Version = "2012-10-17",
@@ -64,7 +66,7 @@ resource "aws_iam_role_policy" "dynamodb_policy" {
 # Política para SNS (condicional)
 resource "aws_iam_role_policy" "sns_policy" {
   count = var.enable_sns_access ? 1 : 0
-  name  = "${var.function_name}-sns-${var.environment}"
+  name  = "${var.country}-${var.product}-${var.environment}-${var.function_name}-sns"
   role  = aws_iam_role.lambda_role.id
   policy = jsonencode({
     Version = "2012-10-17",

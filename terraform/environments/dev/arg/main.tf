@@ -50,7 +50,7 @@ module "create_contact_lambda" {
   country                = var.country
   product                = var.product
   environment            = var.environment
-  filename               = "../../../../lambdas/bin/create-contact.zip"
+  filename               = "../../../../bin/create-contact.zip"
   memory_size            = 256
   enable_dynamodb_access = true
   dynamodb_actions       = ["dynamodb:PutItem"]
@@ -67,7 +67,7 @@ module "dynamodb_trigger_lambda" {
   country                = var.country
   product                = var.product
   environment            = var.environment
-  filename               = "../../../../lambdas/bin/dynamodb-trigger.zip"
+  filename               = "../../../../bin/dynamodb-trigger.zip"
   memory_size            = 256
   enable_dynamodb_access = true
   dynamodb_actions = [
@@ -92,7 +92,7 @@ module "get_contact_lambda" {
   country                = var.country
   product                = var.product
   environment            = var.environment
-  filename               = "../../../../lambdas/bin/get-contact.zip"
+  filename               = "../../../../bin/get-contact.zip"
   memory_size            = 256
   enable_dynamodb_access = true
   dynamodb_actions       = ["dynamodb:GetItem"]
@@ -108,7 +108,7 @@ module "sns_trigger_lambda" {
   country                = var.country
   product                = var.product
   environment            = var.environment
-  filename               = "../../../../lambdas/bin/sns-trigger.zip"
+  filename               = "../../../../bin/sns-trigger.zip"
   memory_size            = 256
   enable_dynamodb_access = true
   dynamodb_actions       = ["dynamodb:UpdateItem"]

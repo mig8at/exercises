@@ -4,7 +4,7 @@
 LAMBDA_DIRS=("create-contact" "get-contact" "dynamodb-trigger" "sns-trigger")
 
 # Create the bin directory if it doesn't exist
-mkdir -p lambdas/bin
+mkdir -p bin
 
 # Loop through each directory
 for dir in "${LAMBDA_DIRS[@]}"; do
@@ -20,11 +20,8 @@ for dir in "${LAMBDA_DIRS[@]}"; do
         exit 1
     fi
 
-    # Zip the binary into a deployment package named "main.zip" inside the same directory
-    zip "main.zip" bootstrap
-
-    # Move the zip file to the bin directory
-    mv "main.zip" "../bin/$dir.zip"
+    # Zip the binary into a deployment package named "$dir.zip" and place it in the bin directory
+    zip "../../bin/$dir.zip" bootstrap
 
     # Remove the binary to clean up
     rm bootstrap
@@ -33,4 +30,4 @@ for dir in "${LAMBDA_DIRS[@]}"; do
     cd ../..
 done
 
-echo "All Lambda functions built and zipped successfully. ZIP files are in the 'lambdas/bin' directory."
+echo "All Lambda functions built and zipped successfully. ZIP files are in the 'bin' directory."

@@ -165,7 +165,7 @@ resource "aws_lambda_permission" "api_gw_create_contact" {
   action        = "lambda:InvokeFunction"
   function_name = module.create_contact_lambda.function_name
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${module.main_api.api_execution_arn}/*/*"
+  source_arn    = "${module.main_api.api_execution_arn}/${aws_apigatewayv2_stage.default_stage.name}/POST/contacts"
 }
 
 
@@ -187,7 +187,7 @@ resource "aws_lambda_permission" "api_gw_get_contact" {
   action        = "lambda:InvokeFunction"
   function_name = module.get_contact_lambda.function_name
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${module.main_api.api_execution_arn}/*/*"
+  source_arn    =  "${module.main_api.api_execution_arn}/${aws_apigatewayv2_stage.default_stage.name}/GET/contacts/*"
 }
 
 
@@ -220,7 +220,8 @@ resource "aws_apigatewayv2_deployment" "api_deployment" {
   api_id = module.main_api.api_id
   depends_on = [
     aws_apigatewayv2_route.create_contact,
-    aws_apigatewayv2_route.get_contact
+    aws_apigatewayv2_route.get_contact,
+    aws_apigatewayv2_stage.default_stage
   ]
 }
 
@@ -234,7 +235,7 @@ resource "aws_cloudwatch_log_group" "api_gw_access_logs" {
 # Stage para el entorno (requerido para la URL)
 resource "aws_apigatewayv2_stage" "default_stage" {
   api_id      = module.main_api.api_id
-  name        = "dev"
+  name        = var.environment
   auto_deploy = true
 
   access_log_settings {
